@@ -22,8 +22,12 @@ pub struct CoreCLR {
 
 impl Drop for CoreCLR {
     fn drop(&mut self) {
+        // If we were able to successfully call coreclr_initialize, it's reasonable to assume we should be able to
+        // shut it down. Panicing if the entry pont can't be found is the best we can do since the trait doesn't
+        // let us do anything else.
         let shutdown_func: lib::Symbol<CoreCLRShutdown> = unsafe { self.library.get(b"coreclr_shutdown").unwrap() };
-        shutdown_func(self.host_handle, self.domain_id);
+        let result = shutdown_func(self.host_handle, self.domain_id);
+        assert!(result >= 0);
     }
 }
 
