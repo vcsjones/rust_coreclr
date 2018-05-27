@@ -1,0 +1,7 @@
+[package]
+name = "rustclr"
+version = "0.1.0"
+authors = ["Kevin Jones <kevin@vcsjones.com>"]
+
+[dependencies]
+libloading = "0.5"
