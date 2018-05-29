@@ -14,6 +14,6 @@ fn main() {
     map.insert("APP_PATHS", exe_path);
     map.insert("TRUSTED_PLATFORM_ASSEMBLIES", "<list of trusted platform assemblies>");
     let coreclr = coreclr::CoreCLR::new("/the/path/to/libcoreclr.dylib", exe_path, app_domain, map).unwrap();
-    let managed_function = coreclr.coreclr_createdelegate(assembly_name, type_name, entry_point).unwrap();
+    let managed_function : coreclr::ManagedDelegate<unsafe extern "C" fn() -> ()> = coreclr.create_delegate(assembly_name, type_name, entry_point).unwrap();
     unsafe { managed_function() };
 }

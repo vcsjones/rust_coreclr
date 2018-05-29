@@ -4,7 +4,9 @@ use std::collections::{HashMap};
 use std::ffi::{CString};
 use std::io;
 use std::io::{Error};
+use std::marker::{PhantomData};
 use std::mem;
+use std::ops::{Deref};
 use std::os::raw::{c_int, c_char, c_uint, c_void};
 use std::ptr;
 use std::vec::{Vec};
@@ -12,6 +14,18 @@ use std::vec::{Vec};
 type CoreCLRInitialize = extern "C" fn (*const c_char, *const c_char, c_int, *const *mut c_char, *const *mut c_char, *mut *mut c_void, *mut c_uint) -> c_int;
 type CoreCLRCreateDelegate = extern "C" fn(*mut c_void, c_uint, *const c_char, *const c_char, *const c_char, *mut *mut c_void) -> c_int;
 type CoreCLRShutdown = extern "C" fn(*mut c_void, c_uint) -> c_int;
+
+pub struct ManagedDelegate<'clr, T : 'clr> {
+    managed_pointer : *mut c_void,
+    phantom: PhantomData<&'clr T>
+}
+
+impl<'clr, T> Deref for ManagedDelegate<'clr, T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        unsafe { mem::transmute(&self.managed_pointer) }
+    }
+}
 
 #[derive(Debug)]
 pub struct CoreCLR {
@@ -32,7 +46,7 @@ impl Drop for CoreCLR {
 }
 
 impl CoreCLR {
-    pub fn coreclr_createdelegate(&self, assembly_name : &str, type_name : &str, method_name : &str) -> io::Result<unsafe extern fn() -> ()> {
+    pub fn create_delegate<'clr, T: 'clr>(&'clr self, assembly_name : &str, type_name : &str, method_name : &str) -> io::Result<ManagedDelegate<'clr, T>> {
         let create_delegate: lib::Symbol<CoreCLRCreateDelegate> = unsafe { self.library.get(b"coreclr_create_delegate")? };
         let assembly_name_ptr = CString::new(assembly_name)?;
         let type_name_ptr = CString::new(type_name)?;
@@ -50,7 +64,7 @@ impl CoreCLR {
             Result::Err(Error::from_raw_os_error(result))
         }
         else {
-            Ok(unsafe { mem::transmute::<*mut c_void, unsafe extern fn() -> ()>(delegate_handle) })
+            Ok(ManagedDelegate { managed_pointer: delegate_handle, phantom: PhantomData })
         }
     }
 
