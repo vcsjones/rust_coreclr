@@ -2,13 +2,11 @@ extern crate libloading as lib;
 
 use std::collections::{HashMap};
 use std::ffi::{CString};
-use std::io;
+use std::{io, mem, ptr};
 use std::io::{Error};
 use std::marker::{PhantomData};
-use std::mem;
 use std::ops::{Deref};
 use std::os::raw::{c_int, c_char, c_uint, c_void};
-use std::ptr;
 use std::vec::{Vec};
 
 type CoreCLRInitialize = extern "C" fn (*const c_char, *const c_char, c_int, *const *mut c_char, *const *mut c_char, *mut *mut c_void, *mut c_uint) -> c_int;
