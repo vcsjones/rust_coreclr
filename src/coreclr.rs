@@ -3,10 +3,11 @@ extern crate libloading as lib;
 use std::collections::{HashMap};
 use std::ffi::{CString};
 use std::{io, mem, ptr};
-use std::io::{Error};
+use std::io::{Error, ErrorKind};
 use std::marker::{PhantomData};
 use std::ops::{Deref};
 use std::os::raw::{c_int, c_char, c_uint, c_void};
+use std::sync::atomic::{AtomicBool, ATOMIC_BOOL_INIT, Ordering};
 use std::vec::{Vec};
 
 type CoreCLRInitialize = extern "C" fn (*const c_char, *const c_char, c_int, *const *mut c_char, *const *mut c_char, *mut *mut c_void, *mut c_uint) -> c_int;
@@ -67,6 +68,10 @@ impl CoreCLR {
     }
 
     pub fn new(library_path : &str, exe_path : &str, app_domain_friendly_name : &str, properties : &HashMap<&str, &str>) -> io::Result<CoreCLR> {
+        static INITIALIZED: AtomicBool = ATOMIC_BOOL_INIT;
+        if INITIALIZED.compare_and_swap(false, true, Ordering::Relaxed) {
+            return Err(Error::new(ErrorKind::Other, "The CLR cannot be loaded more than once. See dotnet/coreclr#12266."));
+        }
         let library = lib::Library::new(library_path)?;
         let exe_path_ptr = CString::new(exe_path)?;
         let app_domain_friendly_name_ptr = CString::new(app_domain_friendly_name)?;
