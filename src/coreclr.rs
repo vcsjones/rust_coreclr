@@ -39,7 +39,7 @@ impl Drop for CoreCLR {
         // let us do anything else.
         let shutdown_func: lib::Symbol<CoreCLRShutdown> = unsafe { self.library.get(b"coreclr_shutdown").unwrap() };
         let result = shutdown_func(self.host_handle, self.domain_id);
-        assert!(result >= 0);
+        debug_assert!(result >= 0);
     }
 }
 
