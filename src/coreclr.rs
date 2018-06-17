@@ -66,7 +66,7 @@ impl CoreCLR {
         }
     }
 
-    pub fn new(library_path : &str, exe_path : &str, app_domain_friendly_name : &str, properties : HashMap<&str, &str>) -> io::Result<CoreCLR> {
+    pub fn new(library_path : &str, exe_path : &str, app_domain_friendly_name : &str, properties : &HashMap<&str, &str>) -> io::Result<CoreCLR> {
         let library = lib::Library::new(library_path)?;
         let exe_path_ptr = CString::new(exe_path)?;
         let app_domain_friendly_name_ptr = CString::new(app_domain_friendly_name)?;
